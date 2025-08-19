@@ -1,0 +1,1 @@
+﻿web: bash -c "python manage.py collectstatic --noinput && python manage.py migrate && gunicorn locker_system.wsgi:application"

@@ -1,0 +1,16 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+staticfiles/
+
+# Node (frontend)
+locker-frontend/node_modules/
+locker-frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
