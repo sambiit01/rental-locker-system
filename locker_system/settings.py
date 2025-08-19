@@ -24,7 +24,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-$6tcsdm3)$=zlgm)bjchy2qfyb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["*"]  # later replace "*" with actual domain
+ALLOWED_HOSTS = ["*","rental-locker-system-backend.onrender.com"]  # later replace "*" with actual domain
 
 # Application definition
 INSTALLED_APPS = [
@@ -133,11 +133,23 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://rental-locker-system.vercel.app",   # replace with your deployed frontend domain
+    "https://rental-locker-system.vercel.app",   # ✅ exact match
 ]
+
 
 FRONTEND_ORIGIN = "http://localhost:5173"
 
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 
 
