@@ -91,9 +91,9 @@ WSGI_APPLICATION = "locker_system.wsgi.application"
 # Database (local fallback + production ready with dj_database_url)
 DATABASES = {
     'default': dj_database_url.config(
-        default="postgresql://postgres:postgres@localhost:5432/rental_locker",
+        default=os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/rental_locker"),
         conn_max_age=600,
-        ssl_require=False
+        ssl_require=not DEBUG   # require SSL in production, but not locally
     )
 }
 
