@@ -101,8 +101,21 @@ export async function requestOTP() {
 }
 
 export async function verifyOTP(otp) {
-  const res = await api.post("/api/locker-access/verify/", { otp }, { headers: authHeader() });
-  return res.data;
+  try {
+    const token = localStorage.getItem("access_token");  // ✅ correct key
+    const res = await axios.post(
+      `${API_URL}/verify-otp/`,
+      { otp },  // matches serializer expecting request.data["otp"]
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,   // ✅ pass JWT to backend
+        },
+      }
+    );
+    return res.data; // {message: "..."}
+  } catch (err) {
+    return { error: err.response?.data?.error || "Invalid OTP" };
+  }
 }
 
 export async function verifyEmailOTP(email, otp) {
