@@ -100,21 +100,26 @@ export async function requestOTP() {
   return res.data;
 }
 
+import axios from "axios";
+
+const API_URL = process.env.REACT_APP_API_URL || "https://rental-locker-system-backend.onrender.com/api";
+
 export async function verifyOTP(otp) {
   try {
-    const token = localStorage.getItem("access_token");  // ✅ correct key
+    const token = localStorage.getItem("access_token"); // JWT
     const res = await axios.post(
-      `${API_URL}/verify-otp/`,
-      { otp },  // matches serializer expecting request.data["otp"]
+      `${API_URL}/verify-otp/`,   // <-- must match backend URL
+      { otp },                    // <-- send JSON { "otp": "123456" }
       {
         headers: {
-          Authorization: `Bearer ${token}`,   // ✅ pass JWT to backend
+          Authorization: `Bearer ${token}`,   // <-- auth header required
+          "Content-Type": "application/json",
         },
       }
     );
-    return res.data; // {message: "..."}
+    return res.data;
   } catch (err) {
-    return { error: err.response?.data?.error || "Invalid OTP" };
+    return { error: err.response?.data?.error || "Verification failed" };
   }
 }
 
