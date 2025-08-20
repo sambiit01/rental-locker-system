@@ -102,6 +102,7 @@ class AvailableLockersList(generics.ListAPIView):
     serializer_class = LockerSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+
     
 
 from rest_framework import status, generics, permissions
