@@ -5,38 +5,35 @@ export default function BookLocker() {
   const [lockerNumber, setLockerNumber] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleBook = async (e) => {
-    e.preventDefault();
+  const handleBook = async () => {
     try {
-      const result = await bookLocker(lockerNumber); // ✅ no manual token
-      setMessage(result.message || "Locker booked successfully!");
+      const res = await bookLocker(lockerNumber); // ✅ calls backend /api/book-locker/
+      setMessage(res.message || "Locker booked successfully!");
     } catch (err) {
-      setMessage(err.error || "Error booking locker.");
+      setMessage(err.error || "Failed to book locker");
     }
   };
 
   return (
     <div className="max-w-md mx-auto bg-gray-800 p-6 rounded shadow text-white">
-      <h2 className="text-2xl font-bold mb-4">Book Locker</h2>
-      {message && <p className="mb-3 text-yellow-400">{message}</p>}
+      <h2 className="text-2xl font-bold mb-4">Book a Locker</h2>
 
-      <form onSubmit={handleBook} className="space-y-3">
-        <input
-          type="text"
-          placeholder="Enter Locker Number (e.g., LCKR-001)"
-          value={lockerNumber}
-          onChange={(e) => setLockerNumber(e.target.value)}
-          className="w-full p-2 bg-gray-700 rounded"
-          required
-        />
+      <input
+        type="text"
+        value={lockerNumber}
+        onChange={(e) => setLockerNumber(e.target.value)}
+        placeholder="Enter locker number"
+        className="w-full p-2 rounded text-black"
+      />
 
-        <button
-          type="submit"
-          className="w-full bg-green-500 py-2 rounded hover:bg-green-600"
-        >
-          Book Locker
-        </button>
-      </form>
+      <button
+        onClick={handleBook}
+        className="mt-4 bg-blue-600 px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Book Locker
+      </button>
+
+      {message && <p className="mt-4">{message}</p>}
     </div>
   );
 }
