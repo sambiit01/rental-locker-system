@@ -19,7 +19,7 @@ from .views import AvailableLockersList, BookLockerView
 
 urlpatterns += [
     path('lockers/available/', AvailableLockersList.as_view(), name='available-lockers'),
-    path('lockers/book/<int:locker_id>/', BookLockerView.as_view(), name='book-locker'),
+    
 ]
 
 

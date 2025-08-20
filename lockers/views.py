@@ -117,22 +117,7 @@ class BookLockerView(generics.GenericAPIView):
             return Response({"detail": "Locker booked successfully."})
         except Locker.DoesNotExist:
             return Response({"detail": "Locker not available."}, status=status.HTTP_404_NOT_FOUND)
-        
-
-
-from rest_framework import generics, permissions
-from .models import Booking
-from .serializers import BookingSerializer
-
-class BookLockerView(generics.CreateAPIView):
-    queryset = Booking.objects.all()
-    serializer_class = BookingSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        student = self.request.user.student
-        serializer.save(student=student)
-
+    
 
 from rest_framework import status, generics, permissions
 from rest_framework.response import Response
