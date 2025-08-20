@@ -100,7 +100,7 @@ export async function requestOTP() {
   return res.data;
 }
 
-import axios from "axios";
+
 
 const API_URL = process.env.REACT_APP_API_URL || "https://rental-locker-system-backend.onrender.com/api";
 
