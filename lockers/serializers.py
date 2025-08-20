@@ -85,7 +85,7 @@ class LockerOTPRequestSerializer(serializers.Serializer):
 # lockers/serializers.py
 from rest_framework import serializers
 from django.utils import timezone
-from .models import LockerAccessLog
+from .models import LockerAccessOTP
 
 class LockerOTPVerifySerializer(serializers.Serializer):
     otp = serializers.CharField()
@@ -94,24 +94,30 @@ class LockerOTPVerifySerializer(serializers.Serializer):
         user = self.context["request"].user
         otp = data["otp"]
 
-        log = (
-            LockerAccessLog.objects.filter(user=user, otp=otp, is_used=False)
-            .order_by("-created_at")
+        # find the latest OTP for this user’s booking
+        otp_entry = (
+            LockerAccessOTP.objects.filter(
+                booking__student=user,
+                otp_code=otp,
+                is_used=False
+            )
+            .order_by("-expires_at")
             .first()
         )
 
-        if not log:
+        if not otp_entry:
             raise serializers.ValidationError({"error": "Invalid OTP"})
 
         # check expiry
-        if hasattr(log, "expires_at") and log.expires_at < timezone.now():
+        if otp_entry.expires_at < timezone.now():
             raise serializers.ValidationError({"error": "OTP expired"})
 
         # mark OTP as used
-        log.is_used = True
-        log.save()
+        otp_entry.is_used = True
+        otp_entry.save()
 
         return data
+
 
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
