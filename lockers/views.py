@@ -102,21 +102,6 @@ class AvailableLockersList(generics.ListAPIView):
     serializer_class = LockerSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-class BookLockerView(generics.GenericAPIView):
-    serializer_class = LockerSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request, locker_id):
-        try:
-            locker = Locker.objects.get(id=locker_id, is_booked=False)
-            if request.user.locker:
-                return Response({"detail": "You have already booked a locker."}, status=status.HTTP_400_BAD_REQUEST)
-            locker.is_booked = True
-            locker.booked_by = request.user
-            locker.save()
-            return Response({"detail": "Locker booked successfully."})
-        except Locker.DoesNotExist:
-            return Response({"detail": "Locker not available."}, status=status.HTTP_404_NOT_FOUND)
     
 
 from rest_framework import status, generics, permissions
