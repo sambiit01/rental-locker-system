@@ -82,25 +82,34 @@ class LockerOTPRequestSerializer(serializers.Serializer):
         )
         return otp_code, expires_at
 
+# lockers/serializers.py
+from rest_framework import serializers
+from django.utils import timezone
+from .models import LockerAccessLog
+
 class LockerOTPVerifySerializer(serializers.Serializer):
-    otp_code = serializers.CharField()
+    otp = serializers.CharField()
 
     def validate(self, data):
-        request = self.context["request"]
-        booking = Booking.objects.filter(student=request.user).first()
-        if not booking:
-            raise serializers.ValidationError("No booking found for this user.")
-        
-        try:
-            otp_entry = LockerAccessOTP.objects.get(booking=booking)
-        except LockerAccessOTP.DoesNotExist:
-            raise serializers.ValidationError("No OTP generated.")
+        user = self.context["request"].user
+        otp = data["otp"]
 
-        if otp_entry.is_expired():
-            raise serializers.ValidationError("OTP has expired.")
+        log = (
+            LockerAccessLog.objects.filter(user=user, otp=otp, is_used=False)
+            .order_by("-created_at")
+            .first()
+        )
 
-        if otp_entry.otp_code != data["otp_code"]:
-            raise serializers.ValidationError("Invalid OTP code.")
+        if not log:
+            raise serializers.ValidationError({"error": "Invalid OTP"})
+
+        # check expiry
+        if hasattr(log, "expires_at") and log.expires_at < timezone.now():
+            raise serializers.ValidationError({"error": "OTP expired"})
+
+        # mark OTP as used
+        log.is_used = True
+        log.save()
 
         return data
 
