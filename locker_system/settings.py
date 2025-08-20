@@ -89,13 +89,30 @@ TEMPLATES = [
 WSGI_APPLICATION = "locker_system.wsgi.application"
 
 # Database (local fallback + production ready with dj_database_url)
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/rental_locker"),
-        conn_max_age=600,
-        ssl_require=not DEBUG   # require SSL in production, but not locally
-    )
-}
+import dj_database_url
+
+if os.getenv("DATABASE_URL"):
+    # Production (Render or any hosted DB)
+    DATABASES = {
+        "default": dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=not DEBUG
+        )
+    }
+else:
+    # Local development
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "rental_locker",   # 👈 your local DB name
+            "USER": "postgres",        # 👈 your local DB user
+            "PASSWORD": "postgres",    # 👈 your local DB password
+            "HOST": "localhost",
+            "PORT": "5432",
+        }
+    }
+
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
