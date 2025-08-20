@@ -20,7 +20,6 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-
 from django.http import JsonResponse
 def home(request):
     return JsonResponse({"message": "Locker System Backend is running!"})
