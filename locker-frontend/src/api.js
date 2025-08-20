@@ -108,7 +108,7 @@ export async function verifyOTP(otp) {
   try {
     const token = localStorage.getItem("access_token"); // JWT
     const res = await axios.post(
-      `${API_URL}/verify/`,   // <-- must match backend URL
+      `${API_URL}/locker-access/verify/`,   // <-- must match backend URL
       { otp },                    // <-- send JSON { "otp": "123456" }
       {
         headers: {
