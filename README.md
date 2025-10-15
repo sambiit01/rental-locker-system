@@ -1,5 +1,6 @@
-# Firebase Studio
+# SmartLocker - Student Locker Booking System
 
-This is a NextJS starter in Firebase Studio.
+A web app that allows students to register, log in, and book available lockers. Built with Firebase Authentication and Firestore, it ensures secure access and real-time updates for locker availability.
 
-To get started, take a look at src/app/page.tsx.
+## Demo
+Check out the live demo: [SmartLocker Demo](http://rental-locker-system.vercel.app/)
