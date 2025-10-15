@@ -1,13 +1,28 @@
+
 "use client";
 
 import { useLocker } from "@/hooks/use-locker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { LockerStatus } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 const statusColors: Record<LockerStatus, string> = {
   available: "bg-green-500",
@@ -18,7 +33,16 @@ const statusColors: Record<LockerStatus, string> = {
 
 
 export default function AdminPage() {
-  const { users, lockers, waitlist, auditLog } = useLocker();
+  const { users, lockers, waitlist, auditLog, forceReturnLocker } = useLocker();
+  const { toast } = useToast();
+
+  const handleForceReturn = (lockerId: number) => {
+    const { penalty } = forceReturnLocker(lockerId);
+    toast({
+        title: "Locker Returned",
+        description: `Locker #${lockerId} was forcefully returned. ${penalty > 0 ? `A mock penalty of $${penalty} was logged.` : ''}`,
+    })
+  }
 
   return (
     <div className="container mx-auto space-y-8">
@@ -45,7 +69,7 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader><CardTitle>Locker Status Overview</CardTitle></CardHeader>
           <CardContent>
@@ -53,10 +77,11 @@ export default function AdminPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Locker ID</TableHead>
+                    <TableHead>Locker</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>User ID</TableHead>
                     <TableHead>Due Date</TableHead>
+                    <TableHead className="text-right">Manage</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -69,7 +94,30 @@ export default function AdminPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>{locker.rentedBy || "N/A"}</TableCell>
-                      <TableCell>{locker.dueDate ? format(new Date(locker.dueDate), "PP") : "N/A"}</TableCell>
+                      <TableCell>{locker.dueDate ? format(new Date(locker.dueDate), "PPp") : "N/A"}</TableCell>
+                      <TableCell className="text-right">
+                        {(locker.status === 'rented' || locker.status === 'overdue') && (
+                           <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm">Force Return</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will immediately return Locker #{locker.id} and revoke access for user {locker.rentedBy}. This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleForceReturn(locker.id)}>
+                                  Confirm Return
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
