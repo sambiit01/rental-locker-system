@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -29,8 +30,6 @@ import { useToast } from "@/hooks/use-toast";
 import { LockerLeaseLogo } from "@/components/icons";
 import { Loader2 } from "lucide-react";
 
-const DUMMY_OTP = "123456";
-
 const formSchema = z.object({
   studentId: z.string().min(1, { message: "Student ID is required." }),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -49,6 +48,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<z.infer<typeof formSchema> | null>(null);
+  const [generatedOtp, setGeneratedOtp] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,6 +62,9 @@ export default function RegisterPage() {
 
   async function onRegisterSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(otp);
+    
     // Simulate sending OTP
     setTimeout(() => {
       setFormData(values);
@@ -69,14 +72,14 @@ export default function RegisterPage() {
       setIsLoading(false);
       toast({
         title: "OTP Sent!",
-        description: `A verification code has been sent to ${values.email}. (Hint: it's ${DUMMY_OTP})`,
+        description: `A verification code has been sent to ${values.email}. (Hint: it's ${otp})`,
       });
     }, 1000);
   }
 
   async function onOtpSubmit(values: z.infer<typeof otpSchema>) {
     setIsLoading(true);
-    if (values.otp !== DUMMY_OTP) {
+    if (values.otp !== generatedOtp) {
       toast({
         title: "Invalid OTP",
         description: "The code you entered is incorrect. Please try again.",
