@@ -73,3 +73,5 @@ export default function RentalDialog({ open, onOpenChange, lockerId }: RentalDia
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}

@@ -31,7 +31,7 @@ export default function AccessDialog({ open, onOpenChange, locker, onReturnClick
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (accessCode && timer > 0) {
+    if (open && accessCode && timer > 0) {
       interval = setInterval(() => {
         setTimer((prev) => prev - 1);
       }, 1000);
@@ -39,7 +39,7 @@ export default function AccessDialog({ open, onOpenChange, locker, onReturnClick
       setAccessCode(null);
     }
     return () => clearInterval(interval);
-  }, [accessCode, timer]);
+  }, [open, accessCode, timer]);
 
   const handleGenerateCode = () => {
     const code = generateAccessCode(locker.id);
@@ -94,3 +94,5 @@ export default function AccessDialog({ open, onOpenChange, locker, onReturnClick
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}

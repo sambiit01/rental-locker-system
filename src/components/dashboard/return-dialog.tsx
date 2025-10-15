@@ -65,3 +65,5 @@ export default function ReturnDialog({ open, onOpenChange, locker }: ReturnDialo
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
