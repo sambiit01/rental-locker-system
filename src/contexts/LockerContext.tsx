@@ -1,7 +1,8 @@
+
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useCallback } from "react";
 import { User, Locker, AuditLogEntry, LockerStatus } from "@/lib/types";
 import { addDays, formatISO } from 'date-fns';
 
@@ -77,30 +78,8 @@ export function LockerProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('locker_currentUser', JSON.stringify(currentUser));
     }
   }, [users, lockers, waitlist, auditLog, currentUser, loading]);
-  
-  // Daily check for overdue lockers
-  useEffect(() => {
-    if (loading) return;
-    const checkOverdue = () => {
-        const now = new Date();
-        const updatedLockers = lockers.map(locker => {
-            if (locker.status === 'rented' && locker.dueDate && new Date(locker.dueDate) < now) {
-                if(locker.status !== 'overdue') {
-                    addAuditLog('SYSTEM', 'LOCKER_OVERDUE', { lockerId: locker.id, studentId: locker.rentedBy });
-                }
-                return { ...locker, status: 'overdue' as LockerStatus };
-            }
-            return locker;
-        });
-        setLockers(updatedLockers);
-    };
 
-    const interval = setInterval(checkOverdue, 1000 * 60 * 60); // Check every hour
-    checkOverdue(); // Initial check
-    return () => clearInterval(interval);
-  }, [lockers, loading]);
-
-  const addAuditLog = (user: string | null, action: string, details: Record<string, any>) => {
+  const addAuditLog = useCallback((user: string | null, action: string, details: Record<string, any>) => {
     const newLogEntry: AuditLogEntry = {
       timestamp: formatISO(new Date()),
       user,
@@ -108,7 +87,35 @@ export function LockerProvider({ children }: { children: ReactNode }) {
       details,
     };
     setAuditLog(prev => [newLogEntry, ...prev]);
-  };
+  }, []);
+  
+  // Daily check for overdue lockers
+  useEffect(() => {
+    if (loading) return;
+
+    const checkOverdue = () => {
+      const now = new Date();
+      let lockersChanged = false;
+      const updatedLockers = lockers.map(locker => {
+        if (locker.status === 'rented' && locker.dueDate && new Date(locker.dueDate) < now) {
+          if (locker.status !== 'overdue') {
+            addAuditLog('SYSTEM', 'LOCKER_OVERDUE', { lockerId: locker.id, studentId: locker.rentedBy });
+            lockersChanged = true;
+          }
+          return { ...locker, status: 'overdue' as LockerStatus };
+        }
+        return locker;
+      });
+
+      if (lockersChanged) {
+        setLockers(updatedLockers);
+      }
+    };
+
+    const interval = setInterval(checkOverdue, 1000 * 60 * 60); // Check every hour
+    checkOverdue(); // Initial check
+    return () => clearInterval(interval);
+  }, [loading, addAuditLog, lockers]);
 
   const login = (email: string, password: string): Promise<User> => {
     return new Promise((resolve, reject) => {
