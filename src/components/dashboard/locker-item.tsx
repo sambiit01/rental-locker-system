@@ -1,8 +1,9 @@
+
 "use client";
 
 import type { Locker } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { LockKeyhole, Lock, UserCheck, AlertTriangle } from "lucide-react";
+import { LockKeyhole, Lock, UserCheck, AlertTriangle, Wrench } from "lucide-react";
 import { useLocker } from "@/hooks/use-locker";
 import { useState } from "react";
 import RentalDialog from "./rental-dialog";
@@ -46,6 +47,14 @@ const statusConfig = {
     border: "border-red-300 dark:border-red-700",
     hover: "hover:bg-red-200 dark:hover:bg-red-800",
   },
+  maintenance: {
+    icon: Wrench,
+    label: "Maintenance",
+    bg: "bg-yellow-100 dark:bg-yellow-900",
+    text: "text-yellow-800 dark:text-yellow-200",
+    border: "border-yellow-300 dark:border-yellow-700",
+    hover: "",
+  },
 };
 
 export default function LockerItem({ locker }: LockerItemProps) {
@@ -55,13 +64,13 @@ export default function LockerItem({ locker }: LockerItemProps) {
   >(null);
   
   const isMyLocker = locker.rentedBy === currentUser?.id;
-  const statusKey = isMyLocker
-    ? locker.status === "overdue"
-      ? "overdue"
-      : "rented_by_me"
-    : locker.status;
+  
+  let statusKey: keyof typeof statusConfig = locker.status;
+  if (isMyLocker) {
+    statusKey = locker.status === 'overdue' ? 'overdue' : 'rented_by_me';
+  }
 
-  const config = statusConfig[statusKey as keyof typeof statusConfig] || statusConfig.rented;
+  const config = statusConfig[statusKey] || statusConfig.rented;
   const Icon = config.icon;
 
   const handleLockerClick = () => {
@@ -72,17 +81,19 @@ export default function LockerItem({ locker }: LockerItemProps) {
     }
   }
 
+  const isDisabled = statusKey === 'rented' || statusKey === 'maintenance';
+
   return (
     <>
       <button
         onClick={handleLockerClick}
-        disabled={statusKey === 'rented'}
+        disabled={isDisabled}
         className={cn(
           "relative flex aspect-square w-full flex-col items-center justify-center rounded-lg border-2 p-4 transition-all duration-200",
           config.bg,
           config.text,
           config.border,
-          config.hover,
+          !isDisabled && config.hover,
           "disabled:cursor-not-allowed disabled:opacity-60"
         )}
       >

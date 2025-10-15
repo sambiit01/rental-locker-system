@@ -21,7 +21,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 
 const statusColors: Record<LockerStatus, string> = {
@@ -33,7 +42,7 @@ const statusColors: Record<LockerStatus, string> = {
 
 
 export default function AdminPage() {
-  const { users, lockers, waitlist, auditLog, forceReturnLocker } = useLocker();
+  const { users, lockers, waitlist, auditLog, forceReturnLocker, updateLockerStatus } = useLocker();
   const { toast } = useToast();
 
   const handleForceReturn = (lockerId: number) => {
@@ -42,6 +51,14 @@ export default function AdminPage() {
         title: "Locker Returned",
         description: `Locker #${lockerId} was forcefully returned. ${penalty > 0 ? `A mock penalty of $${penalty} was logged.` : ''}`,
     })
+  }
+
+  const handleStatusChange = (lockerId: number, status: LockerStatus) => {
+    updateLockerStatus(lockerId, status);
+    toast({
+      title: "Locker Status Updated",
+      description: `Locker #${lockerId} is now marked as ${status}.`
+    });
   }
 
   return (
@@ -89,34 +106,53 @@ export default function AdminPage() {
                     <TableRow key={locker.id}>
                       <TableCell>{locker.id}</TableCell>
                       <TableCell>
-                        <Badge variant={locker.status === 'available' ? 'secondary' : locker.status === 'overdue' ? 'destructive' : 'default'}>
+                        <Badge variant={locker.status === 'available' ? 'secondary' : locker.status === 'overdue' ? 'destructive' : locker.status === 'maintenance' ? 'outline' : 'default'}>
                           {locker.status}
                         </Badge>
                       </TableCell>
                       <TableCell>{locker.rentedBy || "N/A"}</TableCell>
                       <TableCell>{locker.dueDate ? format(new Date(locker.dueDate), "PPp") : "N/A"}</TableCell>
                       <TableCell className="text-right">
-                        {(locker.status === 'rented' || locker.status === 'overdue') && (
-                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="sm">Force Return</Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will immediately return Locker #{locker.id} and revoke access for user {locker.rentedBy}. This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleForceReturn(locker.id)}>
-                                  Confirm Return
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                             {(locker.status === 'rented' || locker.status === 'overdue') && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-destructive focus:text-destructive-foreground">
+                                    Force Return
+                                  </div>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will immediately return Locker #{locker.id} and revoke access for user {locker.rentedBy}. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleForceReturn(locker.id)}>
+                                      Confirm Return
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleStatusChange(locker.id, 'available')}>Available</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(locker.id, 'maintenance')}>Maintenance</DropdownMenuItem>
+                             {locker.rentedBy && <DropdownMenuItem onClick={() => handleStatusChange(locker.id, 'rented')}>Rented</DropdownMenuItem>}
+                             {locker.rentedBy && <DropdownMenuItem onClick={() => handleStatusChange(locker.id, 'overdue')}>Overdue</DropdownMenuItem>}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}

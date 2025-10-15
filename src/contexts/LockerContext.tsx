@@ -24,6 +24,7 @@ type LockerContextType = {
   forceReturnLocker: (lockerId: number) => { penalty: number };
   generateAccessCode: (lockerId: number) => string;
   addToWaitlist: (email: string) => void;
+  updateLockerStatus: (lockerId: number, status: LockerStatus) => void;
 };
 
 export const LockerContext = createContext<LockerContextType | undefined>(undefined);
@@ -216,6 +217,31 @@ export function LockerProvider({ children }: { children: ReactNode }) {
     const locker = lockers.find(l => l.id === lockerId);
     return performReturn(lockerId, locker?.rentedBy || null, 'ADMIN');
   };
+
+  const updateLockerStatus = (lockerId: number, status: LockerStatus) => {
+    setLockers(prevLockers => {
+      return prevLockers.map(locker => {
+        if (locker.id === lockerId) {
+          addAuditLog(currentUser?.email || "SYSTEM", 'UPDATE_LOCKER_STATUS', { lockerId, oldStatus: locker.status, newStatus: status });
+
+          // If setting to available or maintenance, clear rental info
+          if (status === 'available' || status === 'maintenance') {
+            return {
+              ...locker,
+              status,
+              rentedBy: null,
+              rentalDate: null,
+              dueDate: null
+            };
+          }
+
+          // For other statuses, just update the status
+          return { ...locker, status };
+        }
+        return locker;
+      });
+    });
+  };
   
   const generateAccessCode = (lockerId: number) => {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -250,7 +276,8 @@ export function LockerProvider({ children }: { children: ReactNode }) {
     returnLocker,
     forceReturnLocker,
     generateAccessCode,
-    addToWaitlist
+    addToWaitlist,
+    updateLockerStatus,
   };
 
   return (
