@@ -1,10 +1,11 @@
 "use client";
 
 import { useLocker } from "@/hooks/use-locker";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Header from "@/components/header";
 import { Loader2 } from "lucide-react";
+import { ADMIN_EMAILS } from "@/lib/constants";
 
 export default function ProtectedLayout({
   children,
@@ -13,12 +14,19 @@ export default function ProtectedLayout({
 }) {
   const { currentUser, loading } = useLocker();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !currentUser) {
       router.replace("/login");
     }
-  }, [currentUser, loading, router]);
+
+    if (!loading && currentUser && pathname.startsWith('/admin')) {
+      if (!ADMIN_EMAILS.includes(currentUser.email)) {
+        router.replace('/dashboard');
+      }
+    }
+  }, [currentUser, loading, router, pathname]);
 
   if (loading || !currentUser) {
     return (
@@ -27,6 +35,17 @@ export default function ProtectedLayout({
       </div>
     );
   }
+
+  // Admin access check for client-side navigation
+  if (pathname.startsWith('/admin') && !ADMIN_EMAILS.includes(currentUser.email)) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-4">Redirecting...</p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex min-h-screen w-full flex-col">

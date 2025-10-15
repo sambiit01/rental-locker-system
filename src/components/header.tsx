@@ -14,7 +14,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLocker } from "@/hooks/use-locker";
 import { LockerLeaseLogo } from "@/components/icons";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Shield } from "lucide-react";
+import { ADMIN_EMAILS } from "@/lib/constants";
 
 export default function Header() {
   const { currentUser, logout } = useLocker();
@@ -24,6 +25,8 @@ export default function Header() {
       .split(" ")
       .map((n) => n[0])
       .join("") || "U";
+  
+  const isAdmin = currentUser && ADMIN_EMAILS.includes(currentUser.email);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/80 backdrop-blur-sm">
@@ -56,6 +59,14 @@ export default function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              {isAdmin && (
+                <Link href="/admin">
+                  <DropdownMenuItem>
+                    <Shield className="mr-2 h-4 w-4" />
+                    <span>Admin</span>
+                  </DropdownMenuItem>
+                </Link>
+              )}
               <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
