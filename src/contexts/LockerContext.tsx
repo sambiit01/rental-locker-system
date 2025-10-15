@@ -7,7 +7,7 @@ import { User, Locker, AuditLogEntry, LockerStatus } from "@/lib/types";
 import { addMinutes, formatISO } from 'date-fns';
 
 const TOTAL_LOCKERS = 20;
-const RENTAL_DURATION_MINUTES = 1;
+const RENTAL_DURATION_MINUTES = 2;
 
 type LockerContextType = {
   loading: boolean;
