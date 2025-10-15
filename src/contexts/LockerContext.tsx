@@ -22,6 +22,7 @@ type LockerContextType = {
   rentLocker: (lockerId: number, userId: string) => void;
   returnLocker: (lockerId: number, userId: string) => { penalty: number };
   forceReturnLocker: (lockerId: number) => { penalty: number };
+  removeUser: (userId: string) => void;
   generateAccessCode: (lockerId: number) => string;
   addToWaitlist: (email: string) => void;
   updateLockerStatus: (lockerId: number, status: LockerStatus) => void;
@@ -92,7 +93,6 @@ export function LockerProvider({ children }: { children: ReactNode }) {
     setAuditLog(prev => [newLogEntry, ...prev]);
   }, []);
   
-  // Daily check for overdue lockers
   useEffect(() => {
     if (loading) return;
 
@@ -115,8 +115,8 @@ export function LockerProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    const interval = setInterval(checkOverdue, 1000 * 30); // Check every 30 seconds
-    checkOverdue(); // Initial check
+    const interval = setInterval(checkOverdue, 1000 * 30);
+    checkOverdue();
     return () => clearInterval(interval);
   }, [loading, addAuditLog, lockers]);
 
@@ -145,7 +145,6 @@ export function LockerProvider({ children }: { children: ReactNode }) {
       }
       setUsers(prev => [...prev, newUser]);
       addAuditLog(newUser.email, 'REGISTER_SUCCESS', { studentId: newUser.id });
-      // Automatically log in user after registration
       const { password, ...userToStore } = newUser;
       setCurrentUser(userToStore);
       resolve(userToStore);
@@ -190,14 +189,13 @@ export function LockerProvider({ children }: { children: ReactNode }) {
 
         const updatedLockers = lockers.map(l => 
             l.id === lockerId 
-            ? { ...initialLockers.find(il => il.id === lockerId)! } // Reset to initial state
+            ? { ...initialLockers.find(il => il.id === lockerId)! }
             : l
         );
 
         setLockers(updatedLockers);
         addAuditLog(currentUser?.email || 'unknown', actor === 'ADMIN' ? 'FORCE_RETURN_LOCKER' : 'RETURN_LOCKER', { lockerId, studentId: locker.rentedBy, penalty });
 
-        // Check waitlist
         if (waitlist.length > 0) {
             const nextInLine = waitlist[0];
             addAuditLog('SYSTEM', 'NOTIFY_WAITLIST', { notifiedEmail: nextInLine });
@@ -218,13 +216,29 @@ export function LockerProvider({ children }: { children: ReactNode }) {
     return performReturn(lockerId, locker?.rentedBy || null, 'ADMIN');
   };
 
+  const removeUser = (userId: string) => {
+    const userToRemove = users.find(u => u.id === userId);
+    if (!userToRemove) return;
+
+    const lockerRented = lockers.find(l => l.rentedBy === userId);
+    if (lockerRented) {
+      forceReturnLocker(lockerRented.id);
+    }
+    
+    setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+    addAuditLog(currentUser?.email || 'unknown', 'REMOVE_USER', { removedUserId: userId, removedUserEmail: userToRemove.email });
+
+    if (currentUser?.id === userId) {
+      logout();
+    }
+  }
+
   const updateLockerStatus = (lockerId: number, status: LockerStatus) => {
     setLockers(prevLockers => {
       return prevLockers.map(locker => {
         if (locker.id === lockerId) {
           addAuditLog(currentUser?.email || "SYSTEM", 'UPDATE_LOCKER_STATUS', { lockerId, oldStatus: locker.status, newStatus: status });
 
-          // If setting to available or maintenance, clear rental info
           if (status === 'available' || status === 'maintenance') {
             return {
               ...locker,
@@ -234,8 +248,6 @@ export function LockerProvider({ children }: { children: ReactNode }) {
               dueDate: null
             };
           }
-
-          // For other statuses, just update the status
           return { ...locker, status };
         }
         return locker;
@@ -275,6 +287,7 @@ export function LockerProvider({ children }: { children: ReactNode }) {
     rentLocker,
     returnLocker,
     forceReturnLocker,
+    removeUser,
     generateAccessCode,
     addToWaitlist,
     updateLockerStatus,

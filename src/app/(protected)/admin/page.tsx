@@ -2,7 +2,7 @@
 "use client";
 
 import { useLocker } from "@/hooks/use-locker";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 
 
 const statusColors: Record<LockerStatus, string> = {
@@ -42,7 +42,7 @@ const statusColors: Record<LockerStatus, string> = {
 
 
 export default function AdminPage() {
-  const { users, lockers, waitlist, auditLog, forceReturnLocker, updateLockerStatus } = useLocker();
+  const { users, lockers, waitlist, auditLog, forceReturnLocker, updateLockerStatus, removeUser } = useLocker();
   const { toast } = useToast();
 
   const handleForceReturn = (lockerId: number) => {
@@ -60,6 +60,16 @@ export default function AdminPage() {
       description: `Locker #${lockerId} is now marked as ${status}.`
     });
   }
+
+  const handleRemoveUser = (userId: string) => {
+    removeUser(userId);
+    toast({
+        title: "User Removed",
+        description: `The user has been successfully removed.`,
+        variant: "destructive"
+    })
+  }
+
 
   return (
     <div className="container mx-auto space-y-8">
@@ -86,8 +96,8 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
+      <div className="grid gap-6 xl:grid-cols-3">
+        <Card className="xl:col-span-2">
           <CardHeader><CardTitle>Locker Status Overview</CardTitle></CardHeader>
           <CardContent>
             <ScrollArea className="h-[300px]">
@@ -163,6 +173,60 @@ export default function AdminPage() {
         </Card>
 
         <Card>
+            <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>View and manage all registered users.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <ScrollArea className="h-[300px]">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>User</TableHead>
+                                <TableHead className="text-right">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {users.map(user => (
+                                <TableRow key={user.id}>
+                                    <TableCell>
+                                        <div className="font-medium">{user.name}</div>
+                                        <div className="text-xs text-muted-foreground">{user.email}</div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                       <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                    <Trash2 className="h-4 w-4"/>
+                                                    <span className="sr-only">Remove User</span>
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Remove {user.name}?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action cannot be undone. This will permanently delete the user's account and release any locker they have rented.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={() => handleRemoveUser(user.id)}>
+                                                        Confirm Removal
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                 </ScrollArea>
+            </CardContent>
+        </Card>
+      </div>
+
+       <Card>
           <CardHeader><CardTitle>Audit Log</CardTitle></CardHeader>
           <CardContent>
             <ScrollArea className="h-[300px]">
@@ -187,7 +251,6 @@ export default function AdminPage() {
             </ScrollArea>
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }
